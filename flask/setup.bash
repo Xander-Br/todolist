@@ -29,7 +29,7 @@ echo "Database and user setup complete."
 python3 -m venv venv
 
 # Activate the virtual environment
-source venv/bin/activate
+sudo source venv/bin/activate
 
 # Install Python packages inside the virtual environment
 pip install flask flask-cors flask-sqlalchemy
