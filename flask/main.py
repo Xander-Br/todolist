@@ -15,7 +15,7 @@ class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     task = db.Column(db.String(255), nullable=False)
 
-@app.before_first_request
+@app.before_request
 def setup():
     db.create_all()
 

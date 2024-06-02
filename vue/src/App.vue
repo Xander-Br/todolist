@@ -37,6 +37,8 @@
 <script>
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:5001';
+
 export default {
   name: 'App',
   data() {
@@ -51,7 +53,7 @@ export default {
   methods: {
     async fetchTodos() {
       try {
-        const response = await axios.get('http://localhost:5001/todos');
+        const response = await axios.get(`${API_BASE_URL}/todos`);
         this.todos = response.data;
       } catch (error) {
         console.error('Error fetching todos:', error);
@@ -61,7 +63,7 @@ export default {
       if (this.newTask.trim() === '') return;
 
       try {
-        const response = await axios.post('http://localhost:5001/todos', {
+        const response = await axios.post(`${API_BASE_URL}/todos`, {
           task: this.newTask
         });
         this.todos.push(response.data);
@@ -72,7 +74,7 @@ export default {
     },
     async updateTodo(todo) {
       try {
-        await axios.put(`http://localhost:5001/todos/${todo.id}`, {
+        await axios.put(`${API_BASE_URL}/todos/${todo.id}`, {
           task: todo.task
         });
       } catch (error) {
@@ -81,7 +83,7 @@ export default {
     },
     async deleteTodo(id) {
       try {
-        await axios.delete(`http://localhost:5001/todos/${id}`);
+        await axios.delete(`${API_BASE_URL}/todos/${id}`);
         this.todos = this.todos.filter(todo => todo.id !== id);
       } catch (error) {
         console.error('Error deleting todo:', error);
