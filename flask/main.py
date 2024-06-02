@@ -1,33 +1,23 @@
 from flask import Flask, request, jsonify
-from flask_mysqldb import MySQL
+from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-
-import MySQLdb.cursors
 
 app = Flask(__name__)
 CORS(app)
-# MySQL configurations
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'my_user'
-app.config['MYSQL_PASSWORD'] = 'my_password'
-app.config['MYSQL_DB'] = 'my_database'
 
-mysql = MySQL(app)
+# SQLAlchemy configurations
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://my_user:my_password@localhost/my_database'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-def initialize_database():
-    cursor = mysql.connection.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS todos (
-                      id INT AUTO_INCREMENT PRIMARY KEY,
-                      task VARCHAR(255) NOT NULL
-                    )''')
-    mysql.connection.commit()
+db = SQLAlchemy(app)
 
-@app.before_request
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    task = db.Column(db.String(255), nullable=False)
+
+@app.before_first_request
 def setup():
-    cursor = mysql.connection.cursor()
-    cursor.execute('''CREATE DATABASE IF NOT EXISTS my_database''')
-    cursor.execute('USE my_database')
-    initialize_database()
+    db.create_all()
 
 @app.route('/')
 def home():
@@ -35,9 +25,8 @@ def home():
 
 @app.route('/todos', methods=['GET'])
 def get_todos():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT * FROM todos')
-    todo_list = cursor.fetchall()
+    todos = Todo.query.all()
+    todo_list = [{"id": todo.id, "task": todo.task} for todo in todos]
     return jsonify(todo_list), 200
 
 @app.route('/todos', methods=['POST'])
@@ -46,11 +35,10 @@ def add_todo():
     if 'task' not in new_todo:
         return jsonify({"error": "Task is required"}), 400
 
-    cursor = mysql.connection.cursor()
-    cursor.execute('INSERT INTO todos (task) VALUES (%s)', (new_todo['task'],))
-    mysql.connection.commit()
-    new_todo['id'] = cursor.lastrowid
-    return jsonify(new_todo), 201
+    todo = Todo(task=new_todo['task'])
+    db.session.add(todo)
+    db.session.commit()
+    return jsonify({"id": todo.id, "task": todo.task}), 201
 
 @app.route('/todos/<int:todo_id>', methods=['PUT'])
 def update_todo(todo_id):
@@ -58,27 +46,22 @@ def update_todo(todo_id):
     if 'task' not in updates:
         return jsonify({"error": "Task is required"}), 400
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT * FROM todos WHERE id = %s', (todo_id,))
-    todo = cursor.fetchone()
+    todo = Todo.query.get(todo_id)
     if not todo:
         return jsonify({"error": "Todo item not found"}), 404
 
-    cursor.execute('UPDATE todos SET task = %s WHERE id = %s', (updates['task'], todo_id))
-    mysql.connection.commit()
-    todo['task'] = updates['task']
-    return jsonify(todo), 200
+    todo.task = updates['task']
+    db.session.commit()
+    return jsonify({"id": todo.id, "task": todo.task}), 200
 
 @app.route('/todos/<int:todo_id>', methods=['DELETE'])
 def delete_todo(todo_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT * FROM todos WHERE id = %s', (todo_id,))
-    todo = cursor.fetchone()
+    todo = Todo.query.get(todo_id)
     if not todo:
         return jsonify({"error": "Todo item not found"}), 404
 
-    cursor.execute('DELETE FROM todos WHERE id = %s', (todo_id,))
-    mysql.connection.commit()
+    db.session.delete(todo)
+    db.session.commit()
     return '', 204
 
 if __name__ == "__main__":
