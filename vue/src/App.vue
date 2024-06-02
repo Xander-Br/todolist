@@ -1,36 +1,18 @@
 <template>
-  <div id="app" class="container d-flex flex-column align-items-center justify-content-center vh-100">
-    <div class="card w-75 w-md-50 w-lg-25 mb-4">
-      <div class="card-body">
-        <h2 class="card-title text-center">Create todo</h2>
-        <textarea
-          v-model="newTask"
-          class="form-control mb-3"
-          rows="3"
-          placeholder="Enter your task here"
-        ></textarea>
-        <button class="btn btn-primary w-100" @click="addTodo">Submit</button>
-      </div>
-    </div>
-    <div class="w-75 w-md-50 w-lg-25">
-      <ul class="list-group">
-        <li
-          v-for="todo in todos"
-          :key="todo.id"
-          class="list-group-item d-flex justify-content-between align-items-center"
-        >
-          <input
-            v-model="todo.task"
-            @change="updateTodo(todo)"
-            type="text"
-            class="form-control me-2"
-          />
-          <button class="btn btn-danger" @click="deleteTodo(todo.id)">
-            Delete
-          </button>
-        </li>
-      </ul>
-    </div>
+  <div class="container">
+    <h1 class="my-4">To-Do List</h1>
+    
+    <form @submit.prevent="addTodo" class="input-group mb-3">
+      <input type="text" class="form-control" v-model="newTask" placeholder="New task">
+      <button class="btn btn-primary" type="submit">Add</button>
+    </form>
+    
+    <ul class="list-group">
+      <li v-for="todo in todos" :key="todo.id" class="list-group-item d-flex justify-content-between align-items-center">
+        <input type="text" class="form-control" v-model="todo.task" @blur="updateTodo(todo)">
+        <button class="btn btn-danger btn-sm" @click="deleteTodo(todo.id)">Delete</button>
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -94,21 +76,8 @@ export default {
 </script>
 
 <style>
-#app {
-  margin-top: 60px;
-}
-.card {
-  margin-bottom: 20px;
-}
-.list-group-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.form-control {
-  flex: 1;
-}
-.btn-danger {
-  margin-left: 10px;
+.container {
+  max-width: 600px;
+  margin-top: 50px;
 }
 </style>
